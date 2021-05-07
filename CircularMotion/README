@@ -1,0 +1,5 @@
+Running the code
+
+Go to src folder and type the following command on your terminal: 
+
+python -m http.server 9000

@@ -39,6 +39,12 @@ const treeTrunkMaterial = new THREE.MeshLambertMaterial({  color: treeTrunkColor
 
 const treeCrownMaterial = new THREE.MeshLambertMaterial({  color: treeCrownColor});
 
+var cameraPos = [0, 50, 350];
+var cameraRot = [0, 0, 0];
+
+var move = 1;
+var drone = false;
+
 const config = 
 {
   showHitZones: false,
@@ -100,7 +106,7 @@ const aspectRatio = window.innerWidth / window.innerHeight;
 const cameraWidth = 960;
 const cameraHeight = cameraWidth / aspectRatio;
 
-const camera = new THREE.OrthographicCamera
+/*const camera = new THREE.OrthographicCamera
 (
   cameraWidth / -2, // left
   cameraWidth / 2, // right
@@ -111,7 +117,13 @@ const camera = new THREE.OrthographicCamera
 );
 
 camera.position.set(0, -210, 300);
+camera.lookAt(0, 0, 0);*/
+
+const camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
+camera.position.set(0, -310, 100);
 camera.lookAt(0, 0, 0);
+camera.rotation.order = 'YXZ'
+console.log(camera)
 
 const scene = new THREE.Scene();
 
@@ -888,6 +900,79 @@ window.addEventListener("keyup", function (event) {
     return;
   }
 });
+
+window.addEventListener("keyup", function(event){
+  console.log(event.code);
+  if(event.code=="KeyC")
+  {
+    //camera.position.z = 350;
+    //camera.position.y = 50;
+    //camera.position.x = 0;
+    drone = true;
+    camera.position.set(cameraPos[0],cameraPos[1],cameraPos[2]);
+    camera.rotation.set(cameraRot[0],cameraRot[1],cameraRot[2]);
+
+    //camera.rotation.y = 0;
+    //camera.rotation.x = 0;
+    //camera.rotation.z = 0;
+    camera.updateProjectionMatrix();
+    startGame();
+  }
+  else if(event.code=="KeyD")
+  {
+    drone = false;
+    camera.position.z = 100;
+    camera.position.y = -310;
+    camera.position.x = 0;
+    //console.log(camera.rotation);
+    camera.rotation.z = 0;
+    camera.rotation.x = 1.2587542052323633;
+    camera.rotation.y = 0;
+    camera.updateProjectionMatrix();
+    startGame();
+  }
+  if(drone==true)
+  {
+    if(event.code=="ArrowUp")
+    {
+      cameraPos[1]+=move;
+    }
+    else if(event.code=="ArrowDown")
+    {
+      cameraPos[1]-=move;
+    }
+    else if(event.code=="ArrowLeft")
+    {
+      cameraPos[0]-=move;
+    }
+    else if(event.code=="ArrowRight")
+    {
+      cameraPos[0]+=move;
+    }
+    else if(event.code=="KeyI")
+    {
+      cameraPos[2]-=move;
+    }
+    else if(event.code=="KeyO")
+    {
+      cameraPos[2]+=move;
+    }
+    else if(event.code=="NumpadAdd")
+    {
+      move+=0.5;
+      move = Math.min(move, 10.0);
+    }
+    else if(event.code=="NumpadSubtract")
+    {
+      move-=0.5;
+      move = Math.max(move, 1.0);
+    }
+    camera.position.set(cameraPos[0],cameraPos[1],cameraPos[2]);
+    camera.updateProjectionMatrix();
+    startGame();
+  }
+  
+})
 
 function animation(timestamp) {
   if (!lastTimestamp) {

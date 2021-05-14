@@ -39,6 +39,19 @@ const treeTrunkMaterial = new THREE.MeshLambertMaterial({  color: treeTrunkColor
 
 const treeCrownMaterial = new THREE.MeshLambertMaterial({  color: treeCrownColor});
 
+// For Hero
+var blueMat = new THREE.MeshPhongMaterial({
+    color: 0x5b9696,
+    shading:THREE.FlatShading,
+  });
+
+var brownMat = new THREE.MeshStandardMaterial({
+    color: 0x401A07,
+    side:THREE.DoubleSide,
+    shading:THREE.SmoothShading,
+    roughness:1,
+  });
+
 const config = 
 {
   showHitZones: false,
@@ -55,6 +68,7 @@ const playerAngleInitial = Math.PI;
 let playerAngleMoved;
 let accelerate = false; // Is the player accelerating
 let decelerate = false; // Is the player decelerating
+let Hit = false;
 
 let otherVehicles = [];
 let ready;
@@ -70,10 +84,7 @@ const arcAngle1 = (1 / 3) * Math.PI; // 60 degrees
 const deltaY = Math.sin(arcAngle1) * innerTrackRadius;
 const arcAngle2 = Math.asin(deltaY / outerTrackRadius);
 
-const arcCenterX =
-  (Math.cos(arcAngle1) * innerTrackRadius +
-    Math.cos(arcAngle2) * outerTrackRadius) /
-  2;
+const arcCenterX = (Math.cos(arcAngle1) * innerTrackRadius + Math.cos(arcAngle2) * outerTrackRadius) /2;
 
 const arcAngle3 = Math.acos(arcCenterX / innerTrackRadius);
 
@@ -110,6 +121,7 @@ const camera = new THREE.OrthographicCamera
   700 // far plane
 );
 
+// 0, -210, 300
 camera.position.set(0, -210, 300);
 camera.lookAt(0, 0, 0);
 
@@ -117,6 +129,11 @@ const scene = new THREE.Scene();
 
 const playerCar = Car();
 scene.add(playerCar);
+
+// For Hero
+var hero;
+var PI = Math.PI;
+createHero();
 
 renderMap(cameraWidth, cameraHeight * 2); // The map height is higher because we look at the map from an angle
 
@@ -652,6 +669,7 @@ function Car()
     new THREE.BoxBufferGeometry(60, 30, 15),
     new THREE.MeshLambertMaterial({ color })
   );
+  
   main.position.z = 12;
   main.castShadow = true;
   main.receiveShadow = true;
@@ -844,6 +862,144 @@ function Tree()
   return tree;
 }
 
+function Hero() 
+{
+  this.runningCycle = 0;
+  this.runningState = "w";
+  this.mesh = new THREE.Group();
+  this.body = new THREE.Group();
+  this.mesh.add(this.body);
+
+  this.mesh.position.z = 10;
+  this.mesh.position.x = 10;
+
+  
+  var torsoGeom = new THREE.CubeGeometry(8,8,8, 1);//
+  this.torso = new THREE.Mesh(torsoGeom, blueMat);
+  this.torso.position.z = 8;
+  this.torso.castShadow = true;
+  this.body.add(this.torso);
+  
+  var handGeom = new THREE.CubeGeometry(3,3,3, 1);
+  this.handR = new THREE.Mesh(handGeom, brownMat);
+  this.handR.position.x=7;
+  this.handR.position.z=8;
+  this.body.add(this.handR);
+  
+  this.handL = this.handR.clone();
+  this.handL.position.x = - this.handR.position.x;
+  this.body.add(this.handL);
+  
+  var headGeom = new THREE.CubeGeometry(16,16,16, 1);//
+  this.head = new THREE.Mesh(headGeom, blueMat);
+  this.head.position.z = 21;
+  this.head.castShadow = true;
+  this.body.add(this.head);
+  
+  var legGeom = new THREE.CubeGeometry(8,3,5, 1);
+  
+  this.legR = new THREE.Mesh(legGeom, brownMat);
+  // 
+  this.legR.position.y = 0;
+  this.legR.position.x = 7;
+  this.legR.position.z = 0;
+  this.legR.castShadow = true;
+  this.body.add(this.legR);
+  
+  this.legL = this.legR.clone();
+  this.legL.position.x = - this.legR.position.x;
+  this.legL.castShadow = true;
+  this.body.add(this.legL);
+
+  this.body.traverse(function(object) {
+    if (object instanceof THREE.Mesh) 
+    {
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+  });
+}
+
+Hero.prototype.run = function()
+{
+  // this.runningCycle += 0.03;
+  var t = this.runningCycle;
+  t = t * 8;
+  t = t % (2*PI);
+  var amp = 4;
+  
+  if(hero.runningState == "w" || hero.runningState == "s" )
+  {
+      this.legR.position.y =  Math.cos(t) * amp;
+      this.legR.position.z = Math.max (0, - Math.sin(t) * amp);  
+      
+      this.legL.position.y =  Math.cos(t + PI) * amp;
+      this.legL.position.z = Math.max (0, - Math.sin(t + PI) * amp);
+      
+      if (t>PI)
+      {
+        this.legR.rotation.x = Math.cos(t * 2 + PI/2) * PI/4; 
+        this.legL.rotation.x = 0; 
+      } 
+      else
+      {
+        this.legR.rotation.x = 0; 
+        this.legL.rotation.x = Math.cos(t * 2 + PI/2) *  PI/4;  
+      }
+
+      this.torso.position.z = 8 - Math.cos(  t * 2 ) * amp * .2;
+      this.torso.rotation.z = -Math.cos( t + PI ) * amp * .05;
+      
+      this.head.position.z = 21 - Math.cos(  t * 2 ) * amp * .3;
+      this.head.rotation.y = Math.cos( t ) * amp * .02;
+      this.head.rotation.z =  Math.cos( t ) * amp * .01;
+
+      this.handR.position.y = -Math.cos( t ) * amp;
+      this.handR.rotation.x = -Math.cos( t ) * PI/8;
+      this.handL.position.y = -Math.cos( t + PI) * amp;
+      this.handL.rotation.x = -Math.cos( t + PI) * PI/8;
+  }
+
+  if(hero.runningState == "a" || hero.runningState == "d" )
+  {
+      this.legR.position.x =  Math.cos(t) * amp;
+      this.legR.position.z = Math.max (0, - Math.sin(t) * amp);  
+      
+      this.legL.position.x =  Math.cos(t + PI) * amp;
+      this.legL.position.z = Math.max (0, - Math.sin(t + PI) * amp);
+      
+      if (t>PI)
+      {
+        this.legR.rotation.y = Math.cos(t * 2 + PI/2) * PI/4; 
+        this.legL.rotation.y = 0; 
+      } 
+      else
+      {
+        this.legR.rotation.y = 0; 
+        this.legL.rotation.y = Math.cos(t * 2 + PI/2) *  PI/4;  
+      }
+
+      this.torso.position.z = 8 - Math.cos(  t * 2 ) * amp * .2;
+      this.torso.rotation.z = -Math.cos( t + PI ) * amp * .05;
+      
+      this.head.position.z = 21 - Math.cos(  t * 2 ) * amp * .3;
+      this.head.rotation.x = Math.cos( t ) * amp * .02;
+      this.head.rotation.z =  Math.cos( t ) * amp * .01;
+
+      this.handR.position.x = -Math.cos( t ) * amp;
+      this.handR.rotation.y = -Math.cos( t ) * PI/8;
+      this.handL.position.x = -Math.cos( t + PI) * amp;
+      this.handL.rotation.y = -Math.cos( t + PI) * PI/8;
+  }
+}
+
+function createHero() 
+{
+  hero = new Hero();
+  // hero.mesh.position.y=-15;
+  scene.add(hero.mesh);
+}
+
 accelerateButton.addEventListener("mousedown", function () {
   startGame();
   accelerate = true;
@@ -868,6 +1024,13 @@ window.addEventListener("keydown", function (event) {
     accelerate = true;
     return;
   }
+
+  if (event.key == "w") {
+    startGame();
+    // accelerate = true;
+    return;
+  }
+
   if (event.key == "ArrowDown") {
     decelerate = true;
     return;
@@ -878,19 +1041,140 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-window.addEventListener("keyup", function (event) {
-  if (event.key == "ArrowUp") {
+window.addEventListener("keyup", function (event) 
+{
+  if (event.key == "ArrowUp") 
+  {
     accelerate = false;
     return;
   }
-  if (event.key == "ArrowDown") {
+  
+  if (event.key == "ArrowDown") 
+  {
     decelerate = false;
     return;
   }
+
+  // if (event.key == "w")
+  // {
+  //   console.log("Pressed W");
+  //   hero.runningCycle += 0.03;
+  //   return;
+  // }
+
+
 });
 
-function animation(timestamp) {
-  if (!lastTimestamp) {
+window.addEventListener("keydown", function (event) {
+
+  if (event.key == "w")
+  {
+    // console.log("Pressed W");
+    switch(hero.runningState)
+    {
+      case "w": hero.mesh.rotation.z = 0;
+      break;
+
+      case "a": hero.mesh.rotation.z = -Math.PI/2;
+      break;
+
+      case "s": hero.mesh.rotation.z = -Math.PI;
+      break;
+
+      case "d": hero.mesh.rotation.z = Math.PI/2;
+      break;
+    }
+
+    hero.runningCycle += 0.03;
+    hero.mesh.position.y += 0.4;
+    hero.runningState = "w"; 
+    return;
+  }
+
+  if (event.key == "s")
+  {
+    // console.log("Pressed S");
+    switch(hero.runningState)
+    {
+      case "w": hero.mesh.rotation.z = -Math.PI;
+      break;
+
+      case "a": hero.mesh.rotation.z = Math.PI/2;
+      break;
+
+      case "s": hero.mesh.rotation.z = 0;
+      break;
+
+      case "d": hero.mesh.rotation.z = -Math.PI/2;
+      break;
+    }
+
+    hero.runningCycle -= 0.03;
+    hero.mesh.position.y -= 0.4;
+    hero.runningState = "s"; 
+    return;
+
+    // hero.runningCycle -= 0.03;
+    // hero.mesh.rotation.z = -Math.PI/2 
+    // hero.mesh.position.y -= 0.2;
+    // return;
+  }
+
+  if (event.key == "a")
+  {
+    // console.log("Pressed W");
+    switch(hero.runningState)
+    {
+      case "w": hero.mesh.rotation.z = Math.PI/2;
+      break;
+
+      case "a": hero.mesh.rotation.z = 0;
+      break;
+
+      case "s": hero.mesh.rotation.z = -Math.PI/2;
+      break;
+
+      case "d": hero.mesh.rotation.z = -Math.PI;
+      break;
+    }
+
+    hero.runningCycle -= 0.03;
+    hero.mesh.position.x -= 0.4;
+    hero.runningState = "a"; 
+    return;
+  }
+  
+  if (event.key == "d")
+  {
+    // console.log("Pressed W");
+    switch(hero.runningState)
+    {
+      case "w": hero.mesh.rotation.z = -Math.PI/2;
+      break;
+
+      case "a": hero.mesh.rotation.z = -Math.PI;
+      break;
+
+      case "s": hero.mesh.rotation.z = Math.PI/2;
+      break;
+
+      case "d": hero.mesh.rotation.z = 0;
+      break;
+    }
+
+    hero.runningCycle += 0.03;
+    hero.mesh.position.x += 0.4;
+    hero.runningState = "d"; 
+    return;
+  }
+
+});
+
+var rot = -1;
+function animation(timestamp) 
+{
+  if (!lastTimestamp) 
+  {
     lastTimestamp = timestamp;
     return;
   }
@@ -898,6 +1182,12 @@ function animation(timestamp) {
   const timeDelta = timestamp - lastTimestamp;
 
   movePlayerCar(timeDelta);
+
+  // For hero
+  hero.run();
+  // rot+=.01;
+  // hero.mesh.rotation.z = -Math.PI/2 
+  // + Math.sin(rot * Math.PI/8);
 
   const laps = Math.floor(Math.abs(playerAngleMoved) / (Math.PI * 2));
 
@@ -907,18 +1197,27 @@ function animation(timestamp) {
     scoreElement.innerText = score;
   }
 
+  let total_vehicles = 0;
   // Add a new vehicle at the beginning and with every 5th lap
-  if (otherVehicles.length < (laps + 1) / 5) addVehicle();
+  if (otherVehicles.length < (laps + 1) / 5) 
+  {
+    if(total_vehicles < 2)
+    {
+      addVehicle();
+    }
+
+  }
 
   moveOtherVehicles(timeDelta);
 
-  hitDetection();
+  Hit = hitDetection();
 
   renderer.render(scene, camera);
   lastTimestamp = timestamp;
 }
 
-function movePlayerCar(timeDelta) {
+function movePlayerCar(timeDelta) 
+{
   const playerSpeed = getPlayerSpeed();
   playerAngleMoved -= playerSpeed * timeDelta;
 
@@ -933,31 +1232,38 @@ function movePlayerCar(timeDelta) {
   playerCar.rotation.z = totalPlayerAngle - Math.PI / 2;
 }
 
-function moveOtherVehicles(timeDelta) {
-  otherVehicles.forEach((vehicle) => {
-    if (vehicle.clockwise) {
+function moveOtherVehicles(timeDelta) 
+{
+  otherVehicles.forEach((vehicle) => 
+  {
+    if (vehicle.clockwise) 
+    {
       vehicle.angle -= speed * timeDelta * vehicle.speed;
-    } else {
+    } 
+    else 
+    {
       vehicle.angle += speed * timeDelta * vehicle.speed;
     }
 
     const vehicleX = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
     const vehicleY = Math.sin(vehicle.angle) * trackRadius;
-    const rotation =
-      vehicle.angle + (vehicle.clockwise ? -Math.PI / 2 : Math.PI / 2);
+    const rotation = vehicle.angle + (vehicle.clockwise ? -Math.PI / 2 : Math.PI / 2);
     vehicle.mesh.position.x = vehicleX;
     vehicle.mesh.position.y = vehicleY;
     vehicle.mesh.rotation.z = rotation;
   });
 }
 
-function getPlayerSpeed() {
+function getPlayerSpeed() 
+{
   if (accelerate) return speed * 2;
   if (decelerate) return speed * 0.5;
+  if (Hit) return speed * 0;
   return speed;
 }
 
-function addVehicle() {
+function addVehicle() 
+{
   const vehicleTypes = ["car", "truck"];
 
   const type = pickRandom(vehicleTypes);
@@ -972,20 +1278,25 @@ function addVehicle() {
   otherVehicles.push({ mesh, type, speed, clockwise, angle });
 }
 
-function getVehicleSpeed(type) {
-  if (type == "car") {
+function getVehicleSpeed(type) 
+{
+  if (type == "car") 
+  {
     const minimumSpeed = 1;
     const maximumSpeed = 2;
     return minimumSpeed + Math.random() * (maximumSpeed - minimumSpeed);
   }
-  if (type == "truck") {
+  
+  if (type == "truck") 
+  {
     const minimumSpeed = 0.6;
     const maximumSpeed = 1.5;
     return minimumSpeed + Math.random() * (maximumSpeed - minimumSpeed);
   }
 }
 
-function getHitZonePosition(center, angle, clockwise, distance) {
+function getHitZonePosition(center, angle, clockwise, distance) 
+{
   const directionAngle = angle + clockwise ? -Math.PI / 2 : +Math.PI / 2;
   return {
     x: center.x + Math.cos(directionAngle) * distance,
@@ -993,7 +1304,8 @@ function getHitZonePosition(center, angle, clockwise, distance) {
   };
 }
 
-function hitDetection() {
+function hitDetection() 
+{
   const playerHitZone1 = getHitZonePosition(
     playerCar.position,
     playerAngleInitial + playerAngleMoved,
@@ -1041,11 +1353,11 @@ function hitDetection() {
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 40) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 40) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 200) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 200) return true;
 
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 40) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 200) return true;
     }
 
     if (vehicle.type == "truck") {
@@ -1082,19 +1394,24 @@ function hitDetection() {
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 40) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 40) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone3) < 40) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 200) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 200) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone3) < 200) return true;
 
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 40) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 200) return true;
     }
   });
 
-  if (hit) {
-    if (resultsElement) resultsElement.style.display = "flex";
-    renderer.setAnimationLoop(null); // Stop animation loop
-  }
+  // if (hit) 
+  // {
+  //   speed = 0.0001;
+    // console.log(playerCar);
+    // if (resultsElement) resultsElement.style.display = "flex";
+    // renderer.setAnimationLoop(null); // Stop animation loop
+  // }
+
+  return hit;
 }
 
 window.addEventListener("resize", () => {

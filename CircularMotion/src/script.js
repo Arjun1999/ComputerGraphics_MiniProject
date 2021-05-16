@@ -194,6 +194,9 @@ function reset() {
   // Remove other vehicles
   otherVehicles.forEach((vehicle) => {
     // Remove the vehicle from the scene
+
+    if(vehicle.type == "car" || vehicle.type == "truck")
+    {
     scene.remove(vehicle.mesh);
 
     // If it has hit-zone helpers then remove them as well
@@ -203,9 +206,13 @@ function reset() {
       scene.remove(vehicle.mesh.userData.hitZone2);
     if (vehicle.mesh.userData.hitZone3)
       scene.remove(vehicle.mesh.userData.hitZone3);
-  });
+    }
+    });
 
   otherVehicles = [];
+
+  const type = "human";
+  otherVehicles.push({ hero, type});
 
   resultsElement.style.display = "none";
 
@@ -839,7 +846,8 @@ function HitZone()
   return hitZone;
 }
 
-function Wheel() {
+function Wheel() 
+{
   const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
   wheel.position.z = 6;
   wheel.castShadow = false;
@@ -921,6 +929,11 @@ function Hero()
   this.legL.position.x = - this.legR.position.x;
   this.legL.castShadow = true;
   this.body.add(this.legL);
+
+  if (config.showHitZones) 
+  {
+    this.mesh.userData.hitZone1 = HitZone();
+  }
 
   this.body.traverse(function(object) {
     if (object instanceof THREE.Mesh) 
@@ -1007,8 +1020,14 @@ Hero.prototype.run = function()
 function createHero() 
 {
   hero = new Hero();
+  const type = "human";
+
+
   // hero.mesh.position.y=-15;
   scene.add(hero.mesh);
+
+  otherVehicles.push({ hero, type});
+  // console.log(otherVehicles);
 }
 
 accelerateButton.addEventListener("mousedown", function () {
@@ -1288,6 +1307,7 @@ function animation(timestamp)
     if(total_vehicles < 2)
     {
       addVehicle();
+      // console.log(otherVehicles);
     }
 
   }
@@ -1320,6 +1340,8 @@ function moveOtherVehicles(timeDelta)
 {
   otherVehicles.forEach((vehicle) => 
   {
+    if(vehicle.type != "human")
+    {
     if (vehicle.clockwise) 
     {
       vehicle.angle -= speed * timeDelta * vehicle.speed;
@@ -1335,6 +1357,7 @@ function moveOtherVehicles(timeDelta)
     vehicle.mesh.position.x = vehicleX;
     vehicle.mesh.position.y = vehicleY;
     vehicle.mesh.rotation.z = rotation;
+    }
   });
 }
 
@@ -1381,10 +1404,18 @@ function getVehicleSpeed(type)
 
 function getHitZonePosition(center, angle, clockwise, distance) 
 {
-  const directionAngle = angle + clockwise ? -Math.PI / 2 : +Math.PI / 2;
+  const directionAngle = angle + clockwise ? -Math.PI / 2  : +Math.PI / 2;
   return {
     x: center.x + Math.cos(directionAngle) * distance,
     y: center.y + Math.sin(directionAngle) * distance
+  };
+}
+
+function getHitZonePositionAvatar(center) 
+{
+  return {
+    x: center.x,
+    y: center.y 
   };
 }
 
@@ -1484,6 +1515,24 @@ function hitDetection()
 
       // Another vehicle hits the player
       if (getDistance(playerHitZone2, vehicleHitZone1) < 200) return true;
+    }
+
+    if(vehicle.type == "human")
+    {
+        // console.log("Vehicle Hero Pos : ", vehicle.hero.mesh.position); 
+        const HumanHitZone1 = getHitZonePositionAvatar(vehicle.hero.mesh.position);
+
+        if (config.showHitZones) 
+        {
+        vehicle.hero.mesh.userData.hitZone1.position.x = HumanHitZone1.x;
+        vehicle.hero.mesh.userData.hitZone1.position.y = HumanHitZone1.y;
+        }
+
+        // The player hits avatar
+        if (getDistance(playerHitZone1, HumanHitZone1) < 50) return true;
+
+        // Avatar hits the player (Needed??)
+        // if (getDistance(playerHitZone2, HumanHitZone1) < 200) return true;
     }
   });
 

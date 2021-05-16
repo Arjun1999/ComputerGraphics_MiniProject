@@ -1066,7 +1066,7 @@ window.addEventListener("keydown", function (event) {
     return;
   }
   if (event.key == "R" || event.key == "r") {
-    reset();
+    //reset();
     return;
   }
 });
@@ -1217,7 +1217,7 @@ window.addEventListener("keyup", function(event){
     camera.updateProjectionMatrix();
     startGame();
   }
-  else if(event.code=="KeyD")
+  else if(event.code=="KeyR")
   {
     drone = false;
     camera.position.z = 100;

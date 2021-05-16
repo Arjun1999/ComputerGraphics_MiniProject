@@ -68,7 +68,7 @@ const config =
 };
 
 let score;
-const speed = 0.0017;
+const speed = 0.0005;
 
 const playerAngleInitial = Math.PI;
 let playerAngleMoved;
@@ -139,6 +139,8 @@ camera.rotation.order = 'YXZ'
 //console.log(camera)
 
 const avatar_camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
+//const avatar_camera = new THREE.StereoCamera();
+//console.log(avatar_camera.position)
 avatar_camera.position.copy(camera.position);
 avatar_camera.rotation.x = (Math.PI)/2.0;
 //avatar_camera.position.set(0, -310, 100);
@@ -158,10 +160,10 @@ createHero();
 renderMap(cameraWidth, cameraHeight * 2); // The map height is higher because we look at the map from an angle
 
 // Set up lights
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
 dirLight.position.set(100, -300, 300);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 1024;
@@ -174,8 +176,31 @@ dirLight.shadow.camera.near = 100;
 dirLight.shadow.camera.far = 800;
 scene.add(dirLight);
 
+const spotlight = new THREE.SpotLight(0xffffff);
+spotlight.position.set(-125, 35, 150);
+spotlight.distance = 800;
+spotlight.angle = Math.PI/6;
+//spotlight.intensity = 0.9;
+//var obj = scene.getObjectByName("main");
+//spotlight.target = obj;
+//console.log(obj);
+spotlight.castShadow = true;
+
+spotlight.shadow.mapSize.width = 1024;
+spotlight.shadow.mapSize.height = 1024;
+
+spotlight.shadow.camera.near = 500;
+spotlight.shadow.camera.far = 4000;
+spotlight.shadow.camera.fov = 30;
+scene.add(spotlight);
+
+spotlight.target.position.copy(playerCar.position)
+scene.add(spotlight.target)
 // const cameraHelper = new THREE.CameraHelper(dirLight.shadow.camera);
 // scene.add(cameraHelper);
+
+const spotLightHelper = new THREE.SpotLightHelper( spotlight );
+scene.add( spotLightHelper );
 
 if (config.grid) 
 {
@@ -696,7 +721,7 @@ function Car()
     new THREE.BoxBufferGeometry(60, 30, 15),
     new THREE.MeshLambertMaterial({ color })
   );
-  
+  main.name = "main";
   main.position.z = 12;
   main.castShadow = true;
   main.receiveShadow = true;
@@ -1354,6 +1379,10 @@ function animation(timestamp)
   moveOtherVehicles(timeDelta);
 
   Hit = hitDetection();
+
+  spotlight.target.position.copy(playerCar.position)
+  spotlight.target.updateMatrixWorld();
+  spotLightHelper.update();
 
   if(avatar==true){
     //console.log(hero.position);

@@ -140,7 +140,7 @@ camera.rotation.order = 'YXZ'
 
 const avatar_camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
 avatar_camera.position.copy(camera.position);
-avatar_camera.rotation.x = 1.2587542052323633;
+avatar_camera.rotation.x = (Math.PI)/2.0;
 //avatar_camera.position.set(0, -310, 100);
 //avatar_camera.lookAt(0, 0, 0);
 //avatar_camera.rotation.order = 'YXZ'
@@ -1109,18 +1109,23 @@ window.addEventListener("keydown", function (event) {
   if (event.key == "w")
   {
     // console.log("Pressed W");
+    avatar_camera.rotation.y = 0;
     switch(hero.runningState)
     {
       case "w": hero.mesh.rotation.z = 0;
+      //avatar_camera.rotation.y = 0;
       break;
 
       case "a": hero.mesh.rotation.z = -Math.PI/2;
+      //avatar_camera.rotation.y = -Math.PI/2;
       break;
 
       case "s": hero.mesh.rotation.z = -Math.PI;
+      //avatar_camera.rotation.y = -Math.PI;
       break;
 
       case "d": hero.mesh.rotation.z = Math.PI/2;
+      //avatar_camera.rotation.y = Math.PI/2;
       break;
     }
 
@@ -1133,18 +1138,23 @@ window.addEventListener("keydown", function (event) {
   if (event.key == "s")
   {
     // console.log("Pressed S");
+    avatar_camera.rotation.y = -Math.PI
     switch(hero.runningState)
     {
       case "w": hero.mesh.rotation.z = -Math.PI;
+      //avatar_camera.rotation.y = -Math.PI;
       break;
 
       case "a": hero.mesh.rotation.z = Math.PI/2;
+     // avatar_camera.rotation.y = Math.PI/2;
       break;
 
       case "s": hero.mesh.rotation.z = 0;
+     // avatar_camera.rotation.y = 0;
       break;
 
       case "d": hero.mesh.rotation.z = -Math.PI/2;
+      //avatar_camera.rotation.y = -Math.PI/2;
       break;
     }
 
@@ -1162,18 +1172,23 @@ window.addEventListener("keydown", function (event) {
   if (event.key == "a")
   {
     // console.log("Pressed W");
+    avatar_camera.rotation.y = Math.PI/2;
     switch(hero.runningState)
     {
       case "w": hero.mesh.rotation.z = Math.PI/2;
+      //avatar_camera.rotation.y = Math.PI/2;
       break;
 
       case "a": hero.mesh.rotation.z = 0;
+      //avatar_camera.rotation.y = 0;
       break;
 
       case "s": hero.mesh.rotation.z = -Math.PI/2;
+      //avatar_camera.rotation.y = -Math.PI/2;
       break;
 
       case "d": hero.mesh.rotation.z = -Math.PI;
+      //avatar_camera.rotation.y = -Math.PI;
       break;
     }
 
@@ -1186,18 +1201,27 @@ window.addEventListener("keydown", function (event) {
   if (event.key == "d")
   {
     // console.log("Pressed W");
+    avatar_camera.rotation.y = -Math.PI/2;
     switch(hero.runningState)
     {
       case "w": hero.mesh.rotation.z = -Math.PI/2;
+      //avatar_camera.rotation.y = -Math.PI/2;
+      //console.log(avatar_camera.rotation)
       break;
 
       case "a": hero.mesh.rotation.z = -Math.PI;
+      //avatar_camera.rotation.y = -Math.PI;
+      //console.log(avatar_camera.rotation)
       break;
 
       case "s": hero.mesh.rotation.z = Math.PI/2;
+      //avatar_camera.rotation.y = Math.PI/2;
+      //console.log(avatar_camera.rotation)
       break;
 
       case "d": hero.mesh.rotation.z = 0;
+      //avatar_camera.rotation.y = 0;
+      //console.log(avatar_camera.rotation)
       break;
     }
 
@@ -1334,7 +1358,12 @@ function animation(timestamp)
   if(avatar==true){
     //console.log(hero.position);
     avatar_camera.position.copy(hero.mesh.position);
-    //avatar_camera.quaternion.copy(hero.mesh.quaternion);
+    var dir = new THREE.Vector3( 0, 0, 20 );
+    avatar_camera.position.add(dir)
+    //avatar_camera.rotation.copy(hero.mesh.rotation);
+    //console.log(avatar_camera.rotation)
+    //avatar_camera.rotation.x = (Math.PI)/2.0;
+    //console.log(hero.mesh.quaternion);
     renderer.render(scene, avatar_camera);  
   }
   else{

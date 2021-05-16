@@ -44,6 +44,7 @@ var cameraRot = [0, 0, 0];
 
 var move = 1;
 var drone = false;
+var avatar = false;
 // For Hero
 var blueMat = new THREE.MeshPhongMaterial({
     color: 0x5b9696,
@@ -134,7 +135,15 @@ const camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
 camera.position.set(0, -310, 100);
 camera.lookAt(0, 0, 0);
 camera.rotation.order = 'YXZ'
-console.log(camera)
+//camera.rotation.x = (Math.PI)/2.0;
+//console.log(camera)
+
+const avatar_camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
+avatar_camera.position.copy(camera.position);
+avatar_camera.rotation.x = 1.2587542052323633;
+//avatar_camera.position.set(0, -310, 100);
+//avatar_camera.lookAt(0, 0, 0);
+//avatar_camera.rotation.order = 'YXZ'
 
 const scene = new THREE.Scene();
 
@@ -1208,6 +1217,7 @@ window.addEventListener("keyup", function(event){
     //camera.position.y = 50;
     //camera.position.x = 0;
     drone = true;
+    avatar = false;
     camera.position.set(cameraPos[0],cameraPos[1],cameraPos[2]);
     camera.rotation.set(cameraRot[0],cameraRot[1],cameraRot[2]);
 
@@ -1220,6 +1230,7 @@ window.addEventListener("keyup", function(event){
   else if(event.code=="KeyR")
   {
     drone = false;
+    avatar = false;
     camera.position.z = 100;
     camera.position.y = -310;
     camera.position.x = 0;
@@ -1229,6 +1240,10 @@ window.addEventListener("keyup", function(event){
     camera.rotation.y = 0;
     camera.updateProjectionMatrix();
     startGame();
+  }
+  else if(event.code=="KeyQ")
+  {
+    avatar = true;
   }
   if(drone==true)
   {
@@ -1316,7 +1331,15 @@ function animation(timestamp)
 
   Hit = hitDetection();
 
-  renderer.render(scene, camera);
+  if(avatar==true){
+    //console.log(hero.position);
+    avatar_camera.position.copy(hero.mesh.position);
+    //avatar_camera.quaternion.copy(hero.mesh.quaternion);
+    renderer.render(scene, avatar_camera);  
+  }
+  else{
+    renderer.render(scene, camera);
+  }
   lastTimestamp = timestamp;
 }
 

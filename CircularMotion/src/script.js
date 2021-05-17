@@ -132,7 +132,7 @@ camera.position.set(0, -210, 300);
 camera.lookAt(0, 0, 0);*/
 
 const camera = new THREE.PerspectiveCamera(75, aspectRatio, 2, 1000);
-camera.position.set(0, -310, 100);
+camera.position.set(0, -310, 300);
 camera.lookAt(0, 0, 0);
 camera.rotation.order = 'YXZ'
 //camera.rotation.x = (Math.PI)/2.0;
@@ -152,6 +152,10 @@ const scene = new THREE.Scene();
 const playerCar = Car();
 scene.add(playerCar);
 
+createHeadLightCar(playerCar, -6);
+createHeadLightCar(playerCar,  6);
+
+
 // For Hero
 var hero;
 var PI = Math.PI;
@@ -160,10 +164,19 @@ createHero();
 renderMap(cameraWidth, cameraHeight * 2); // The map height is higher because we look at the map from an angle
 
 // Set up lights
+<<<<<<< Updated upstream
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+=======
+// 0.6
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.125);
+scene.add(ambientLight);
+
+// 0.6
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.05);
+>>>>>>> Stashed changes
 dirLight.position.set(100, -300, 300);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 1024;
@@ -722,6 +735,10 @@ function Car()
     new THREE.MeshLambertMaterial({ color })
   );
   main.name = "main";
+  
+  // createHeadLight(main, -10);
+  // createHeadLight(main,  10);
+
   main.position.z = 12;
   main.castShadow = true;
   main.receiveShadow = true;
@@ -766,6 +783,8 @@ function Car()
     car.userData.hitZone1 = HitZone();
     car.userData.hitZone2 = HitZone();
   }
+
+ 
 
   return car;
 }
@@ -1463,6 +1482,19 @@ function addVehicle()
   const mesh = type == "car" ? Car() : Truck();
   scene.add(mesh);
 
+  // HeadLights?
+  if(type == "car")
+  {
+    createHeadLightCar(mesh, -5);
+    createHeadLightCar(mesh,  5);
+  }
+
+  if(type == "truck")
+  {
+    createHeadLightTruck(mesh, -5);
+    createHeadLightTruck(mesh,  5);
+  }
+
   otherVehicles.push({ mesh, type, speed, clockwise, angle });
 }
 
@@ -1499,6 +1531,50 @@ function getHitZonePositionAvatar(center)
     y: center.y 
   };
 }
+
+function createHeadLightCar(base, shift) 
+{
+  let bulb = new THREE.Mesh(new THREE.BoxBufferGeometry(), new THREE.MeshBasicMaterial());
+  bulb.scale.setScalar(3);
+  bulb.position.set(32, shift, 14);
+  base.add(bulb);
+  // scene.add(bulb);
+
+  let light = new THREE.SpotLight(0xffffff, 2, 1000, (THREE.Math.degToRad(40)), 0.15);
+    // , 100, THREE.Math.degToRad(15));
+  // , -50, 80, THREE.Math.degToRad(10), 30);
+  light.position.set(32, shift, 14);
+  base.add(light);
+  // scene.add(light);
+
+  let lightTarget = new THREE.Object3D();
+  lightTarget.position.set(32 + 0.1, (shift), 13.95);
+  base.add(lightTarget);
+  // scene.add(lightTarget);
+
+  // console.log(base);
+  
+  light.target = lightTarget;
+}
+
+function createHeadLightTruck(base, shift) 
+{
+  let bulb = new THREE.Mesh(new THREE.BoxBufferGeometry(), new THREE.MeshBasicMaterial());
+  bulb.scale.setScalar(3);
+  bulb.position.set(55, shift, 14);
+  base.add(bulb);
+
+  let light = new THREE.SpotLight(0xffffff, 2, 1000, (THREE.Math.degToRad(40)), 0.15);
+  light.position.set(55, shift, 14);
+  base.add(light);
+
+  let lightTarget = new THREE.Object3D();
+  lightTarget.position.set(55 + 0.1, shift + 0.8, 13.95);
+  base.add(lightTarget);
+
+  light.target = lightTarget;
+}
+
 
 function hitDetection() 
 {

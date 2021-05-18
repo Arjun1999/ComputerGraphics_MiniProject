@@ -63,18 +63,20 @@ const config =
   showHitZones: false,
   shadows: true, // Use shadow
   trees: true, // Add trees to the map
+  lamp_posts: true, //Add lamp posts to the map
   curbs: true, // Show texture on the extruded geometry
   grid: false // Show grid helper
 };
 
 let score;
-const speed = 0.0005;
+const speed = 0.0017;
 
 const playerAngleInitial = Math.PI;
 let playerAngleMoved;
 let accelerate = false; // Is the player accelerating
 let decelerate = false; // Is the player decelerating
 let Hit = false;
+let followPlayerCar = false;
 
 let otherVehicles = [];
 let ready;
@@ -102,13 +104,11 @@ const instructionsElement = document.getElementById("instructions");
 const resultsElement = document.getElementById("results");
 const accelerateButton = document.getElementById("accelerate");
 const decelerateButton = document.getElementById("decelerate");
-// const youtubeLogo = document.getElementById("youtube-main");
 
 setTimeout(() => 
 {
   if (ready) instructionsElement.style.opacity = 1;
   buttonsElement.style.opacity = 1;
-  // youtubeLogo.style.opacity = 1;
 }, 4000);
 
 // Initialize ThreeJs
@@ -164,19 +164,12 @@ createHero();
 renderMap(cameraWidth, cameraHeight * 2); // The map height is higher because we look at the map from an angle
 
 // Set up lights
-<<<<<<< Updated upstream
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
-scene.add(ambientLight);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-=======
 // 0.6
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.125);
 scene.add(ambientLight);
 
 // 0.6
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.05);
->>>>>>> Stashed changes
 dirLight.position.set(100, -300, 300);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 1024;
@@ -264,6 +257,7 @@ function reset() {
   resultsElement.style.display = "none";
 
   lastTimestamp = undefined;
+  followPlayerCar = false;
 
   // Place the player's car to the starting position
   movePlayerCar(0);
@@ -282,7 +276,6 @@ function startGame()
     scoreElement.innerText = 0;
     buttonsElement.style.opacity = 1;
     instructionsElement.style.opacity = 0;
-    // youtubeLogo.style.opacity = 1;
     renderer.setAnimationLoop(animation);
   }
 }
@@ -689,6 +682,16 @@ function renderMap(mapWidth, mapHeight)
     tree14.position.y = -arcCenterX * 1.8;
     scene.add(tree14);
   }
+
+  if (config.lamp_posts) {
+    const lp1 = LampPost(arcCenterX, 0);
+    lp1.position.x = arcCenterX;
+    scene.add(lp1);
+
+    const lp2 = LampPost(-arcCenterX, 0);
+    lp2.position.x = -arcCenterX;
+    scene.add(lp2);
+  }
 }
 
 function getCarFrontTexture() 
@@ -912,15 +915,15 @@ function Tree()
 {
   const tree = new THREE.Group();
 
-  const trunk = new THREE.Mesh(treeTrunkGeometry, treeTrunkMaterial);
-  trunk.position.z = 10;
+  const treeHeights = [45, 60, 75];
+  const height = pickRandom(treeHeights);
+
+  const trunk = new THREE.Mesh(new THREE.BoxBufferGeometry(10, 10, height + 30), treeTrunkMaterial);
+  trunk.position.z = height;
   trunk.castShadow = true;
   trunk.receiveShadow = true;
   trunk.matrixAutoUpdate = false;
   tree.add(trunk);
-
-  const treeHeights = [45, 60, 75];
-  const height = pickRandom(treeHeights);
 
   const crown = new THREE.Mesh(
     new THREE.SphereGeometry(height / 2, 30, 30),
@@ -932,6 +935,31 @@ function Tree()
   tree.add(crown);
 
   return tree;
+}
+
+function LampPost(x, y)
+{
+  const lamp_post = new THREE.Group();
+
+  const lamp = new THREE.Mesh(new THREE.BoxBufferGeometry(10, 10, 15), new THREE.MeshPhongMaterial({color: 0xFFFFFF, opacity: 0.6, transparent: true, side: THREE.DoubleSide,}))
+  lamp.position.z = 60;
+  lamp.castShadow = true;
+  lamp.receiveShadow = false;
+  lamp.matrixAutoUpdate = true;
+  lamp_post.add(lamp);
+
+  const post = new THREE.Mesh(new THREE.BoxBufferGeometry(5, 5, 50), new THREE.MeshLambertMaterial({color: 0x624003}))
+  post.position.z = 25;
+  post.castShadow = true;
+  post.receiveShadow = true;
+  post.matrixAutoUpdate = true;
+  lamp_post.add(post);
+
+  const light = new THREE.PointLight(0xFF0000, 1);
+  light.position.set(x, y, 60);
+  lamp_post.add(light);
+
+  return lamp_post;
 }
 
 function Hero() 
@@ -1120,6 +1148,10 @@ window.addEventListener("keydown", function (event) {
   }
   if (event.key == "R" || event.key == "r") {
     //reset();
+    return;
+  }
+  if (event.key == "F" || event.key == "f"){
+    followPlayerCar = !followPlayerCar;
     return;
   }
 });
@@ -1383,14 +1415,14 @@ function animation(timestamp)
     scoreElement.innerText = score;
   }
 
-  let total_vehicles = 0;
   // Add a new vehicle at the beginning and with every 5th lap
-  if (otherVehicles.length < (laps + 1) / 5) 
+  if (otherVehicles.length < (laps + 1) / 2) 
   {
-    if(total_vehicles < 2)
+    if(otherVehicles.length < 4)
     {
-      addVehicle();
-      // console.log(otherVehicles);
+      addVehicle(otherVehicles.length);
+      console.log("Length of other vehicles");
+      console.log(otherVehicles.length);
     }
 
   }
@@ -1425,7 +1457,10 @@ function movePlayerCar(timeDelta)
   const playerSpeed = getPlayerSpeed();
   playerAngleMoved -= playerSpeed * timeDelta;
 
-  const totalPlayerAngle = playerAngleInitial + playerAngleMoved;
+  let totalPlayerAngle = playerAngleInitial + playerAngleMoved;
+  if (totalPlayerAngle < -Math.PI) {
+    totalPlayerAngle += 2 * Math.PI;
+  }
 
   const playerX = Math.cos(totalPlayerAngle) * trackRadius - arcCenterX;
   const playerY = Math.sin(totalPlayerAngle) * trackRadius;
@@ -1442,22 +1477,104 @@ function moveOtherVehicles(timeDelta)
   {
     if(vehicle.type != "human")
     {
-    if (vehicle.clockwise) 
-    {
-      vehicle.angle -= speed * timeDelta * vehicle.speed;
-    } 
-    else 
-    {
-      vehicle.angle += speed * timeDelta * vehicle.speed;
-    }
+      if (vehicle.following && followPlayerCar){
+        vehicle.speed = getPlayerSpeed();
+        vehicle.angle -= timeDelta * vehicle.speed;
+        vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius - arcCenterX;
+        vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+        vehicle.mesh.rotation.z = vehicle.angle - Math.PI / 2;
+        return;
+      }
 
-    const vehicleX = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
-    const vehicleY = Math.sin(vehicle.angle) * trackRadius;
-    const rotation = vehicle.angle + (vehicle.clockwise ? -Math.PI / 2 : Math.PI / 2);
-    vehicle.mesh.position.x = vehicleX;
-    vehicle.mesh.position.y = vehicleY;
-    vehicle.mesh.rotation.z = rotation;
-    }
+      if (vehicle.clockwise) 
+      {
+        vehicle.angle -= speed * timeDelta * vehicle.speed;
+        if (vehicle.angle < -Math.PI) {
+          vehicle.angle += 2 * Math.PI;
+        }      
+        if (followPlayerCar && vehicle.angle <= - Math.PI + arcAngle4 && !Hit){
+          if (playerCar.rotation.z + Math.PI / 2 < -arcAngle1 - 1.0 * vehicle.number){
+            vehicle.angle = playerCar.rotation.z + Math.PI/2 + 1.0 * vehicle.number;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius - arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.speed = getPlayerSpeed();
+            vehicle.following = true;
+            return;
+          } else { return; }
+        } else if (!followPlayerCar && vehicle.following) {
+          if (vehicle.angle < arcAngle1){
+            vehicle.angle = Math.PI - arcAngle4;
+            vehicle.speed = 1;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.mesh.rotation.z = vehicle.angle - Math.PI / 2;
+            vehicle.following = false;
+            return;
+          } else { 
+            vehicle.speed = getPlayerSpeed();
+            vehicle.angle -= timeDelta * vehicle.speed;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius - arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.mesh.rotation.z = vehicle.angle - Math.PI / 2;
+            return;
+          }
+        } else {
+          vehicle.angle -= speed * timeDelta * vehicle.speed;
+          const vehicleX = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
+          const vehicleY = Math.sin(vehicle.angle) * trackRadius;
+          const rotation = vehicle.angle + (vehicle.clockwise ? -Math.PI / 2 : Math.PI / 2);
+          vehicle.mesh.position.x = vehicleX;
+          vehicle.mesh.position.y = vehicleY;
+          vehicle.mesh.rotation.z = rotation;
+          return;
+        }
+      }
+      else 
+      {
+        
+        vehicle.angle += speed * timeDelta * vehicle.speed;
+        if (vehicle.angle > Math.PI) {
+          vehicle.angle -= 2 * Math.PI;
+        }  
+        if (followPlayerCar && vehicle.angle <= Math.PI - arcAngle4 && !Hit){
+          if (playerCar.rotation.z + Math.PI / 2 < arcAngle1 - 1.0 * vehicle.number){
+            vehicle.angle = playerCar.rotation.z + Math.PI/2 + 1.0 * vehicle.number;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius - arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.speed = getPlayerSpeed();
+            vehicle.following = true;
+            return;
+          } else { return; }
+        } else if (!followPlayerCar && vehicle.following) {
+          if (vehicle.angle < -arcAngle1){
+            vehicle.angle = -Math.PI + arcAngle4;
+            vehicle.speed = 1;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.mesh.rotation.z = vehicle.angle + Math.PI / 2;
+            vehicle.following = false;
+            return;
+          } else { 
+            vehicle.speed = getPlayerSpeed();
+            vehicle.angle -= timeDelta * vehicle.speed;
+            vehicle.mesh.position.x = Math.cos(vehicle.angle) * trackRadius - arcCenterX;
+            vehicle.mesh.position.y = Math.sin(vehicle.angle) * trackRadius;
+            vehicle.mesh.rotation.z = vehicle.angle - Math.PI / 2;
+            return;
+          }
+        } else {
+          vehicle.angle += speed * timeDelta * vehicle.speed;
+          const vehicleX = Math.cos(vehicle.angle) * trackRadius + arcCenterX;
+          const vehicleY = Math.sin(vehicle.angle) * trackRadius;
+          const rotation = vehicle.angle + (vehicle.clockwise ? -Math.PI / 2 : Math.PI / 2);
+          vehicle.mesh.position.x = vehicleX;
+          vehicle.mesh.position.y = vehicleY;
+          vehicle.mesh.rotation.z = rotation;
+          return;
+        }
+
+      }
+      }
   });
 }
 
@@ -1469,7 +1586,7 @@ function getPlayerSpeed()
   return speed;
 }
 
-function addVehicle() 
+function addVehicle(number) 
 {
   const vehicleTypes = ["car", "truck"];
 
@@ -1478,6 +1595,7 @@ function addVehicle()
   const clockwise = Math.random() >= 0.5;
 
   const angle = clockwise ? Math.PI / 2 : -Math.PI / 2;
+  const following = false;
 
   const mesh = type == "car" ? Car() : Truck();
   scene.add(mesh);
@@ -1495,7 +1613,7 @@ function addVehicle()
     createHeadLightTruck(mesh,  5);
   }
 
-  otherVehicles.push({ mesh, type, speed, clockwise, angle });
+  otherVehicles.push({ mesh, type, speed, clockwise, angle, following, number});
 }
 
 function getVehicleSpeed(type) 
@@ -1625,11 +1743,11 @@ function hitDetection()
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 200) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 200) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 100) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 100) return true;
 
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 200) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 100) return true;
     }
 
     if (vehicle.type == "truck") {
@@ -1666,12 +1784,12 @@ function hitDetection()
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 200) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 200) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone3) < 200) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 100) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 100) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone3) < 100) return true;
 
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 200) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 100) return true;
     }
 
     if(vehicle.type == "human")

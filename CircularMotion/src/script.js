@@ -692,13 +692,18 @@ function renderMap(mapWidth, mapHeight)
   }
 
   if (config.lamp_posts) {
-    const lp1 = LampPost(arcCenterX, 0);
+    const lp1 = LampPost(arcCenterX, 0, 0xfcf787);
     lp1.position.x = arcCenterX;
     scene.add(lp1);
 
-    const lp2 = LampPost(-arcCenterX, 0);
+    const lp2 = LampPost(-arcCenterX, 0, 0xfcf787);
     lp2.position.x = -arcCenterX;
     scene.add(lp2);
+
+    const lp3 = LampPost(0, -1, 0xfcf787);
+    lp3.position.x = 0;
+    lp3.position.y = -1;
+    scene.add(lp3);
   }
 }
 
@@ -945,11 +950,11 @@ function Tree()
   return tree;
 }
 
-function LampPost(x, y)
+function LampPost(x, y, color)
 {
   const lamp_post = new THREE.Group();
 
-  const lamp = new THREE.Mesh(new THREE.BoxBufferGeometry(10, 10, 15), new THREE.MeshPhongMaterial({color: 0xFFFFFF, opacity: 0.6, transparent: true, side: THREE.DoubleSide,}))
+  const lamp = new THREE.Mesh(new THREE.BoxBufferGeometry(10, 10, 15), new THREE.MeshPhongMaterial({color: color, opacity: 0.9, transparent: true, side: THREE.DoubleSide,}))
   lamp.position.z = 60;
   lamp.castShadow = true;
   lamp.receiveShadow = false;
@@ -963,9 +968,54 @@ function LampPost(x, y)
   post.matrixAutoUpdate = true;
   lamp_post.add(post);
 
-  const light = new THREE.PointLight(0xFF0000, 1);
+  const light = new THREE.PointLight(color, 1);
   light.position.set(x, y, 60);
   lamp_post.add(light);
+
+  return lamp_post;
+}
+
+function LampPost2(x, y, color)
+{
+  const lamp_post = new THREE.Group();
+
+  const lamp = new THREE.Mesh(new THREE.BoxBufferGeometry(10, 10, 15), new THREE.MeshPhongMaterial({color: color, opacity: 0.9, transparent: true, side: THREE.DoubleSide,}))
+  lamp.position.z = 60;
+  lamp.castShadow = true;
+  lamp.receiveShadow = false;
+  lamp.matrixAutoUpdate = true;
+  lamp_post.add(lamp);
+
+  const post = new THREE.Mesh(new THREE.BoxBufferGeometry(5, 5, 50), new THREE.MeshLambertMaterial({color: 0x624003}))
+  post.position.z = 25;
+  post.castShadow = true;
+  post.receiveShadow = true;
+  post.matrixAutoUpdate = true;
+  lamp_post.add(post);
+
+  const light1 = new THREE.SpotLight(color, 0.5);
+  light1.target.position.set(x-50, y, 0);
+  light1.castShadow = true;
+  light1.position.set(x, y, 60);
+  lamp_post.add(light1);
+
+  const light2 = new THREE.SpotLight(color, 0.5);
+  light2.target.position.set(x+50, y, 0);
+  light2.castShadow = true;
+  light2.position.set(x, y, 60);
+  lamp_post.add(light2);
+
+  const light3 = new THREE.SpotLight(color, 0.5);
+  light3.target.position.set(x, y-50, 0);
+  light3.castShadow = true;
+  light3.position.set(x, y, 60);
+  lamp_post.add(light3);
+
+  const light4 = new THREE.SpotLight(color, 0.5);
+  light4.target.position.set(x, y+50, 0);
+  light4.castShadow = true;
+  light4.position.set(x, y, 60);
+  lamp_post.add(light4);
 
   return lamp_post;
 }

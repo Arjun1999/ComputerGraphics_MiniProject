@@ -77,6 +77,10 @@ let accelerate = false; // Is the player accelerating
 let decelerate = false; // Is the player decelerating
 let Hit = false;
 let followPlayerCar = false;
+let HitMesh = "none";
+let HumanMount = 0;
+let AvatarJump = 0;
+let JumpBackThresh = 20;
 
 let otherVehicles = [];
 let ready;
@@ -152,8 +156,8 @@ const scene = new THREE.Scene();
 const playerCar = Car();
 scene.add(playerCar);
 
-createHeadLightCar(playerCar, -6);
-createHeadLightCar(playerCar,  6);
+// createHeadLightCar(playerCar, -6);
+// createHeadLightCar(playerCar,  6);
 
 
 // For Hero
@@ -164,12 +168,16 @@ createHero();
 renderMap(cameraWidth, cameraHeight * 2); // The map height is higher because we look at the map from an angle
 
 // Set up lights
-// 0.6
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.125);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
 // 0.6
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.05);
+// const ambientLight = new THREE.AmbientLight(0xffffff, 0.125);
+// scene.add(ambientLight);
+
+// 0.6
+// const dirLight = new THREE.DirectionalLight(0xffffff, 0.05);
 dirLight.position.set(100, -300, 300);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 1024;
@@ -1206,7 +1214,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle += 0.03;
-    hero.mesh.position.y += 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.y = playerCar.position.y;
+    }
+    
+    hero.mesh.translateY(1);
+    // hero.mesh.position.y += 0.4;
+
     hero.runningState = "w"; 
     return;
   }
@@ -1235,7 +1251,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle -= 0.03;
-    hero.mesh.position.y -= 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.y = playerCar.position.y;
+    }
+    
+    hero.mesh.translateY(-1);
+    // hero.mesh.position.y -= 0.4;
+    
     hero.runningState = "s"; 
     return;
 
@@ -1269,7 +1293,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle -= 0.03;
-    hero.mesh.position.x -= 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.x = playerCar.position.x;
+    }
+    
+    hero.mesh.translateX(-1);
+    // hero.mesh.position.x -= 0.4;
+    
     hero.runningState = "a"; 
     return;
   }
@@ -1302,15 +1334,25 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle += 0.03;
-    hero.mesh.position.x += 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.x = playerCar.position.x;
+    }
+    
+    hero.mesh.translateX(1);
+    // hero.mesh.position.x += 0.4;
+
+
     hero.runningState = "d"; 
     return;
   }
 
 });
 
-window.addEventListener("keyup", function(event){
-  console.log(event.code);
+window.addEventListener("keyup", function(event)
+{
+  // console.log(event.code);
   if(event.code=="KeyC")
   {
     //camera.position.z = 350;
@@ -1386,7 +1428,34 @@ window.addEventListener("keyup", function(event){
     startGame();
   }
   
-})
+  if(event.key == "m")
+  {
+    if(Hit == true && HitMesh == "human")
+    {
+      hero.mesh.position.x = playerCar.position.x;
+      hero.mesh.position.y = playerCar.position.y;
+      hero.mesh.position.z = 25;
+      Hit = false;
+      HumanMount = 1;
+    }
+  }
+
+  if(event.key == "u")
+  {
+      hero.mesh.position.x = playerCar.position.x + 50;
+      hero.mesh.position.y = playerCar.position.y;
+      hero.mesh.position.z = 20;
+      Hit = false;
+      HumanMount = 0;
+    
+  }
+
+  if(event.code == "Space")
+  {
+    AvatarJump = 1;
+  }
+
+});
 
 var rot = -1;
 function animation(timestamp) 
@@ -1400,6 +1469,56 @@ function animation(timestamp)
   const timeDelta = timestamp - lastTimestamp;
 
   movePlayerCar(timeDelta);
+
+  if(HumanMount)
+  {
+    hero.mesh.position.x = playerCar.position.x;
+    hero.mesh.position.y = playerCar.position.y;
+    
+    if(AvatarJump === 0)
+    {
+      hero.mesh.position.z = 25;
+    }
+
+    JumpBackThresh = 25;
+  }
+  
+  
+
+  if(AvatarJump === 1)
+  {
+    // hero.mesh.position.z = 100;
+    while(Math.floor(hero.mesh.position.z) != 50)
+    {
+      hero.mesh.position.z += 1.5;
+      break;
+    }
+    
+    if(Math.floor(hero.mesh.position.z) == 50)
+    {
+      AvatarJump = -1;
+    }  
+  }
+
+  else if(AvatarJump === -1)
+  {
+    // hero.mesh.position.z = 20;
+    
+    while(Math.floor(hero.mesh.position.z) != JumpBackThresh)
+    {
+      // console.log("Jump Back Down, ", hero.mesh.position.z);
+      hero.mesh.position.z -= 1.5;
+      break;
+    }
+    
+    if(Math.floor(hero.mesh.position.z) < JumpBackThresh)
+    {
+      hero.mesh.position.z = JumpBackThresh;
+      AvatarJump = 0;
+    }
+    
+    // AvatarJump = 0;  
+  }
 
   // For hero
   hero.run();
@@ -1429,7 +1548,10 @@ function animation(timestamp)
 
   moveOtherVehicles(timeDelta);
 
-  Hit = hitDetection();
+  Hit = hitDetection()[0];
+  HitMesh = hitDetection()[1];
+
+  // console.log("Hit Tuple :", Hit[1]);
 
   spotlight.target.position.copy(playerCar.position)
   spotlight.target.updateMatrixWorld();
@@ -1582,7 +1704,7 @@ function getPlayerSpeed()
 {
   if (accelerate) return speed * 2;
   if (decelerate) return speed * 0.5;
-  if (Hit) return speed * 0;
+  if ((Hit && HitMesh == "human" && HumanMount == 0) || ((Hit && HitMesh == "car") || (Hit && HitMesh == "truck"))) return speed * 0;
   return speed;
 }
 
@@ -1717,7 +1839,8 @@ function hitDetection()
     playerCar.userData.hitZone2.position.x = playerHitZone2.x;
     playerCar.userData.hitZone2.position.y = playerHitZone2.y;
   }
-
+  
+  let hitType = "none"; 
   const hit = otherVehicles.some((vehicle) => {
     if (vehicle.type == "car") {
       const vehicleHitZone1 = getHitZonePosition(
@@ -1743,11 +1866,23 @@ function hitDetection()
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 100) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 100) return true;
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 100) 
+      {
+        hitType = "car";
+        return true;
+      }
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 100)
+      { 
+        hitType = "car";
+        return true;
+      }
 
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 100) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 100)
+      {
+        hitType = "car" 
+        return true;
+      }
     }
 
     if (vehicle.type == "truck") {
@@ -1784,12 +1919,27 @@ function hitDetection()
       }
 
       // The player hits another vehicle
-      if (getDistance(playerHitZone1, vehicleHitZone1) < 100) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone2) < 100) return true;
-      if (getDistance(playerHitZone1, vehicleHitZone3) < 100) return true;
-
+      if (getDistance(playerHitZone1, vehicleHitZone1) < 100)
+      {
+        hitType = "truck";
+        return true;
+      }
+      if (getDistance(playerHitZone1, vehicleHitZone2) < 100)
+      {
+        hitType = "truck";
+        return true;
+      }
+      if (getDistance(playerHitZone1, vehicleHitZone3) < 100)
+      {
+        hitType = "truck";
+        return true;
+      }
       // Another vehicle hits the player
-      if (getDistance(playerHitZone2, vehicleHitZone1) < 100) return true;
+      if (getDistance(playerHitZone2, vehicleHitZone1) < 100) 
+      {
+        hitType = "truck";
+        return true;
+      }
     }
 
     if(vehicle.type == "human")
@@ -1804,7 +1954,11 @@ function hitDetection()
         }
 
         // The player hits avatar
-        if (getDistance(playerHitZone1, HumanHitZone1) < 50) return true;
+        if (getDistance(playerHitZone1, HumanHitZone1) < 50) 
+        {
+          hitType = "human";
+          return true;
+        }
 
         // Avatar hits the player (Needed??)
         // if (getDistance(playerHitZone2, HumanHitZone1) < 200) return true;
@@ -1818,8 +1972,8 @@ function hitDetection()
     // if (resultsElement) resultsElement.style.display = "flex";
     // renderer.setAnimationLoop(null); // Stop animation loop
   // }
-
-  return hit;
+  // console.log("hit detection mlem: ", hit, hitType);
+  return [hit, hitType];
 }
 
 window.addEventListener("resize", () => {

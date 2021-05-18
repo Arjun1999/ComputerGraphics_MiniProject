@@ -77,6 +77,8 @@ let decelerate = false; // Is the player decelerating
 let Hit = false;
 let HitMesh = "none";
 let HumanMount = 0;
+let AvatarJump = 0;
+let JumpBackThresh = 20;
 
 let otherVehicles = [];
 let ready;
@@ -1173,7 +1175,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle += 0.03;
-    hero.mesh.position.y += 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.y = playerCar.position.y;
+    }
+    
+    hero.mesh.translateY(1);
+    // hero.mesh.position.y += 0.4;
+
     hero.runningState = "w"; 
     return;
   }
@@ -1202,7 +1212,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle -= 0.03;
-    hero.mesh.position.y -= 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.y = playerCar.position.y;
+    }
+    
+    hero.mesh.translateY(-1);
+    // hero.mesh.position.y -= 0.4;
+    
     hero.runningState = "s"; 
     return;
 
@@ -1236,7 +1254,15 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle -= 0.03;
-    hero.mesh.position.x -= 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.x = playerCar.position.x;
+    }
+    
+    hero.mesh.translateX(-1);
+    // hero.mesh.position.x -= 0.4;
+    
     hero.runningState = "a"; 
     return;
   }
@@ -1269,7 +1295,16 @@ window.addEventListener("keydown", function (event) {
     }
 
     hero.runningCycle += 0.03;
-    hero.mesh.position.x += 0.4;
+    
+    if(HumanMount)
+    {
+      hero.mesh.position.x = playerCar.position.x;
+    }
+    
+    hero.mesh.translateX(1);
+    // hero.mesh.position.x += 0.4;
+
+
     hero.runningState = "d"; 
     return;
   }
@@ -1370,10 +1405,15 @@ window.addEventListener("keyup", function(event)
   {
       hero.mesh.position.x = playerCar.position.x + 50;
       hero.mesh.position.y = playerCar.position.y;
-      hero.mesh.position.z = 14;
+      hero.mesh.position.z = 20;
       Hit = false;
       HumanMount = 0;
     
+  }
+
+  if(event.code == "Space")
+  {
+    AvatarJump = 1;
   }
 
 });
@@ -1395,8 +1435,52 @@ function animation(timestamp)
   {
     hero.mesh.position.x = playerCar.position.x;
     hero.mesh.position.y = playerCar.position.y;
-    hero.mesh.position.z = 25;
+    
+    if(AvatarJump === 0)
+    {
+      hero.mesh.position.z = 25;
+    }
+
+    JumpBackThresh = 25;
   }
+  
+  
+
+  if(AvatarJump === 1)
+  {
+    // hero.mesh.position.z = 100;
+    while(Math.floor(hero.mesh.position.z) != 50)
+    {
+      hero.mesh.position.z += 1.5;
+      break;
+    }
+    
+    if(Math.floor(hero.mesh.position.z) == 50)
+    {
+      AvatarJump = -1;
+    }  
+  }
+
+  else if(AvatarJump === -1)
+  {
+    // hero.mesh.position.z = 20;
+    
+    while(Math.floor(hero.mesh.position.z) != JumpBackThresh)
+    {
+      // console.log("Jump Back Down, ", hero.mesh.position.z);
+      hero.mesh.position.z -= 1.5;
+      break;
+    }
+    
+    if(Math.floor(hero.mesh.position.z) < JumpBackThresh)
+    {
+      hero.mesh.position.z = JumpBackThresh;
+      AvatarJump = 0;
+    }
+    
+    // AvatarJump = 0;  
+  }
+
   // For hero
   hero.run();
   // rot+=.01;

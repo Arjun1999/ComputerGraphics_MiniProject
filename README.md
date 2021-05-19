@@ -1,11 +1,14 @@
 # ComputerGraphics_MiniProject
 
 Controls:
-Keys WASD for avatar movement
+WASD for avatar movement
+Space for jump
 
-Press Key Q to switch to avatar mode.\
-Press Key C to switch to camera drone mode. Press arrow keys, I/O for movement.\
-Press Key R to reset camera.
+M to mount the avatar on the leader vehicle. 
+U to unmount the avatar from the leader vehicle.
 
-Press Key F to switch the leader-follow mode on and off.
+Q to switch to avatar mode.\
+C to switch to camera drone mode. Press arrow keys, I/O for movement.\
+R to reset camera\
 
+F to switch the leader-follow mode on and off.

@@ -42,6 +42,7 @@ const treeCrownMaterial = new THREE.MeshLambertMaterial({  color: treeCrownColor
 var cameraPos = [0, 50, 350];
 var cameraRot = [0, 0, 0];
 
+var spotlight_on_off = 1;
 var move = 1;
 var drone = false;
 var avatar = false;
@@ -215,6 +216,8 @@ scene.add(spotlight.target)
 
 const spotLightHelper = new THREE.SpotLightHelper( spotlight );
 scene.add( spotLightHelper );
+
+//spotlight.visible = false;
 
 if (config.grid) 
 {
@@ -1505,6 +1508,11 @@ window.addEventListener("keyup", function(event)
     AvatarJump = 1;
   }
 
+  if(event.code=="KeyZ")
+  {
+    spotlight_on_off^=1;
+  }
+
 });
 
 var rot = -1;
@@ -1606,6 +1614,14 @@ function animation(timestamp)
   spotlight.target.position.copy(playerCar.position)
   spotlight.target.updateMatrixWorld();
   spotLightHelper.update();
+  if(spotlight_on_off==1)
+  {
+    spotlight.visible = true;
+  }
+  else 
+  {
+    spotlight.visible = false;
+  }
 
   if(avatar==true){
     //console.log(hero.position);

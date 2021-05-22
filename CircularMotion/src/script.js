@@ -103,7 +103,7 @@ const arcAngle3 = Math.acos(arcCenterX / innerTrackRadius);
 
 const arcAngle4 = Math.acos(arcCenterX / outerTrackRadius);
 
-const scoreElement = document.getElementById("score");
+//const scoreElement = document.getElementById("score");
 const buttonsElement = document.getElementById("buttons");
 const instructionsElement = document.getElementById("instructions");
 const resultsElement = document.getElementById("results");
@@ -240,7 +240,7 @@ function reset() {
   // Reset position and score
   playerAngleMoved = 0;
   score = 0;
-  scoreElement.innerText = "Press UP";
+  //scoreElement.innerText = "Press UP";
 
   // Remove other vehicles
   otherVehicles.forEach((vehicle) => {
@@ -284,7 +284,7 @@ function startGame()
   if (ready) 
   {
     ready = false;
-    scoreElement.innerText = 0;
+    //scoreElement.innerText = 0;
     buttonsElement.style.opacity = 1;
     instructionsElement.style.opacity = 0;
     renderer.setAnimationLoop(animation);
@@ -621,7 +621,7 @@ function renderMap(mapWidth, mapHeight)
   fieldMesh.matrixAutoUpdate = false;
   scene.add(fieldMesh);
 
-  positionScoreElement();
+  //positionScoreElement();
 
   if (config.trees) {
     const tree1 = Tree();
@@ -1541,8 +1541,6 @@ function animation(timestamp)
     JumpBackThresh = 25;
   }
   
-  
-
   if(AvatarJump === 1)
   {
     // hero.mesh.position.z = 100;
@@ -1589,7 +1587,7 @@ function animation(timestamp)
   // Update score if it changed
   if (laps != score) {
     score = laps;
-    scoreElement.innerText = score;
+    //scoreElement.innerText = score;
   }
 
   // Add a new vehicle at the beginning and with every 5th lap
@@ -1616,10 +1614,12 @@ function animation(timestamp)
   spotLightHelper.update();
   if(spotlight_on_off==1)
   {
+    console.log("HERE in 1")
     spotlight.visible = true;
   }
   else 
   {
+    console.log("HERE in 0")
     spotlight.visible = false;
   }
 
@@ -2053,7 +2053,7 @@ window.addEventListener("resize", () => {
   camera.bottom = adjustedCameraHeight / -2;
   camera.updateProjectionMatrix(); // Must be called after change
 
-  positionScoreElement();
+  //positionScoreElement();
 
   // Reset renderer
   renderer.setSize(window.innerWidth, window.innerHeight);

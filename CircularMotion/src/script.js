@@ -190,7 +190,7 @@ dirLight.shadow.camera.top = 400;
 dirLight.shadow.camera.bottom = -300;
 dirLight.shadow.camera.near = 100;
 dirLight.shadow.camera.far = 800;
-scene.add(dirLight);
+//scene.add(dirLight);
 
 const spotlight = new THREE.SpotLight(0xffffff);
 spotlight.position.set(-125, 35, 150);

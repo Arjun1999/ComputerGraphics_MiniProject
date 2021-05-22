@@ -82,6 +82,7 @@ let HitMesh = "none";
 let HumanMount = 0;
 let AvatarJump = 0;
 let JumpBackThresh = 20;
+let HeadLightSwitch = 1;
 
 let otherVehicles = [];
 let ready;
@@ -157,8 +158,8 @@ const scene = new THREE.Scene();
 const playerCar = Car();
 scene.add(playerCar);
 
-// createHeadLightCar(playerCar, -6);
-// createHeadLightCar(playerCar,  6);
+createHeadLightCar(playerCar, -6);
+createHeadLightCar(playerCar,  6);
 
 
 // For Hero
@@ -1513,6 +1514,19 @@ window.addEventListener("keyup", function(event)
     spotlight_on_off^=1;
   }
 
+  if(event.code=="KeyH")
+  {
+    if(HeadLightSwitch == 0)
+    {
+      HeadLightSwitch = 1;
+    }
+
+    if(HeadLightSwitch == 1)
+    {
+      HeadLightSwitch = 0;
+    }
+  }
+
 });
 
 var rot = -1;
@@ -1576,6 +1590,7 @@ function animation(timestamp)
     // AvatarJump = 0;  
   }
 
+  
   // For hero
   hero.run();
   // rot+=.01;
@@ -1599,6 +1614,58 @@ function animation(timestamp)
       console.log("Length of other vehicles");
       console.log(otherVehicles.length);
     }
+
+  }
+
+  if(HeadLightSwitch === 1)
+  {
+    playerCar.children.forEach((child) => 
+    {
+      if(child.type === "SpotLight")
+      {
+        child.visible = true;
+      }
+    });
+
+    otherVehicles.forEach((vehicle) =>
+    {
+      // console.log("Vehicle : ", vehicle);
+      if(vehicle.type === "car" || vehicle.type === "truck")
+      {
+        vehicle.mesh.children.forEach((child) => 
+        {
+          if(child.type === "SpotLight")
+          {
+            child.visible = true;
+          }
+        });
+      }
+    });
+  }
+
+  if(HeadLightSwitch === 0)
+  {
+    playerCar.children.forEach((child) => 
+    {
+      if(child.type === "SpotLight")
+      {
+        child.visible = false;
+      }
+    });
+
+    otherVehicles.forEach((vehicle) =>
+    {
+      if(vehicle.type === "car" || vehicle.type === "truck")
+      {
+        vehicle.mesh.children.forEach((child) => 
+        {
+          if(child.type === "SpotLight")
+          {
+            child.visible = false;
+          }
+        });
+      }
+    });
 
   }
 
